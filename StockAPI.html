@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Information</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Stock Information Search</h1>
+    <input type="text" id="ticker" placeholder="Enter Stock Ticker" />
+    <button onclick="searchStock()">Search</button>
+    <button onclick="clearResults()">Clear</button>
+
+    <div id="error" class="error"></div>
+
+    <div id="results" style="display:none;">
+        <h2>Company Outlook</h2>
+        <table>
+            <tr><th>Company Name</th><td id="companyName"></td></tr>
+            <tr><th>Ticker</th><td id="tickerSymbol"></td></tr>
+            <tr><th>Exchange</th><td id="exchange"></td></tr>
+            <tr><th>Start Date</th><td id="startDate"></td></tr>
+            <tr><th>Description</th><td id="description"></td></tr>
+        </table>
+
+        <h2>Stock Summary</h2>
+        <table>
+            <tr><th>Trading Day</th><td id="tradingDay"></td></tr>
+            <tr><th>Previous Close</th><td id="prevClose"></td></tr>
+            <tr><th>Open</th><td id="open"></td></tr>
+            <tr><th>High</th><td id="high"></td></tr>
+            <tr><th>Low</th><td id="low"></td></tr>
+            <tr><th>Last Price</th><td id="lastPrice"></td></tr>
+            <tr><th>Change</th><td id="change"></td></tr>
+            <tr><th>Change Percent</th><td id="changePercent"></td></tr>
+        </table>
+    </div>
+
+    <script>
+        async function searchStock() {
+            const ticker = document.getElementById('ticker').value.trim();
+            if (!ticker) {
+                document.getElementById('error').textContent = 'Please enter a ticker.';
+                return;
+            }
+
+            document.getElementById('error').textContent = '';
+            const url = `/api/stock?ticker=${ticker}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    document.getElementById('error').textContent = data.error || 'Unknown error occurred.';
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = 'Error fetching data.';
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            const { company, stock } = data;
+
+            document.getElementById('companyName').textContent = company.name;
+            document.getElementById('tickerSymbol').textContent = company.ticker;
+            document.getElementById('exchange').textContent = company.exchangeCode;
+            document.getElementById('startDate').textContent = company.startDate;
+            document.getElementById('description').textContent = company.description;
+
+            document.getElementById('tradingDay').textContent = new Date(stock.timestamp).toLocaleDateString();
+            document.getElementById('prevClose').textContent = stock.prevClose;
+            document.getElementById('open').textContent = stock.open;
+            document.getElementById('high').textContent = stock.high;
+            document.getElementById('low').textContent = stock.low;
+            document.getElementById('lastPrice').textContent = stock.last;
+
+            const change = stock.last - stock.prevClose;
+            const changePercent = (change / stock.prevClose) * 100;
+
+            document.getElementById('change').textContent = change.toFixed(2);
+            document.getElementById('changePercent').textContent = changePercent.toFixed(2) + '%';
+        }
+
+        function clearResults() {
+            document.getElementById('ticker').value = '';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').textContent = '';
+        }
+    </script>
+</body>
+</html>
